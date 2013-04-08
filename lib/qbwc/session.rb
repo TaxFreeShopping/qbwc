@@ -70,13 +70,14 @@ class QBWC::Session
         end
       end
 
+      @current_request = nil
       @progress = 100
       nil
     end
   end
 
   def next_request
-    (@qbwc_iterating == true && @qbwc_iterator_queue.shift) || @current_job.next
+    (@qbwc_iterating == true && @qbwc_iterator_queue.shift) || @current_job.try(:next)
   end
 
   def parse_response_header(response)
@@ -85,7 +86,7 @@ class QBWC::Session
     status_code, status_severity, status_message, iterator_remaining_count, iterator_id = \
       response['xml_attributes'].values_at('statusCode', 'statusSeverity', 'statusMessage', 
                                                'iteratorRemainingCount', 'iteratorID') 
-                                               
+
     if status_severity == 'Error' || status_code.to_i > 1 || response.keys.size <= 1
       @current_request.error = "QBWC ERROR: #{status_code} - #{status_message}"
     else
@@ -101,15 +102,13 @@ class QBWC::Session
     end
   end
 
-class << self
+  class << self
+    def new_or_unfinished
+      (!@@session || @@session.finished?) ? new : @@session
+    end
 
-  def new_or_unfinished
-    (!@@session || @@session.finished?) ? new : @@session
+    def session
+      @@session
+    end
   end
-
-end
-
-	def self.session
-		@@session
-	end
 end

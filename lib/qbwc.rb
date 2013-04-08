@@ -5,15 +5,19 @@ require 'quickbooks'
 module QBWC
 
   # Web connector login credentials
-  mattr_accessor :username
-  @@username = 'foo'
-  mattr_accessor :password
-  @@password = 'bar'
-  
+  mattr_accessor :authentication_proc
+  @@authentication_proc = nil
+
+  mattr_accessor :request_verification_proc
+  @@request_verification_proc = nil
+
+  mattr_accessor :ticket_destruction_proc
+  @@ticket_destruction_proc = nil
+
   # Full path to pompany file 
   mattr_accessor :company_file_path 
   @@company_file_path = ""
-  
+
   # Minimum quickbooks version required for use in qbxml requests
   mattr_accessor :min_version
   @@min_version = 3.0

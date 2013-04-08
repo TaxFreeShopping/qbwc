@@ -34,7 +34,7 @@ class QBWC::Job
     @request_gen = new_request_generator
   end
 
-private
+  private
 
   def new_request_generator
     Fiber.new { request_queue.each { |r| Fiber.yield r }; nil }

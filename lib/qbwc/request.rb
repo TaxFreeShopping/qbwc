@@ -24,7 +24,7 @@ class QBWC::Request
   end
 
   def process_response
-    @response_proc && @response && @response_proc.call(response) 
+    @response_proc && @response && @response_proc.call(response)
   end
 
   def to_qbxml
@@ -36,11 +36,8 @@ class QBWC::Request
   end
 
   class << self
-
     def from_array(requests, response_proc)
       Array(requests).map { |r| new(r, response_proc) } 
     end
-
   end
-
 end

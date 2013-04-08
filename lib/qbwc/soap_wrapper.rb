@@ -22,7 +22,8 @@ class QBWC::SoapWrapper
   end
 
   def self.route_request(request)
-    @conn_data.receive_string = request.raw_post
+    request.env['rack.input'].rewind
+    @conn_data.receive_string = request.env['rack.input'].read
     @conn_data.receive_contenttype = request.content_type
     @conn_data.soapaction = nil
 

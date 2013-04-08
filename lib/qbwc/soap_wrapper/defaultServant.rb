@@ -39,7 +39,16 @@ class QBWC::QBWebConnectorSvcSoap
   #
   def authenticate(parameters)
     #p parameters                               
-    QBWC::AuthenticateResponse.new([QBWC.username, QBWC.company_file_path]) #path to company file
+    if QBWC.authentication_proc
+      ticket = QBWC.authentication_proc.call(parameters.strUserName, parameters.strPassword)
+    else
+      Rails.logger.warn 'No QBWC authentication_proc'
+      ticket = 'blanket_pass'
+    end
+    if ticket == 'nvu'
+      raise Exception
+    end
+    QBWC::AuthenticateResponse.new([ticket, QBWC.company_file_path]) #path to company file
   end
 
   # SYNOPSIS
@@ -53,6 +62,7 @@ class QBWC::QBWebConnectorSvcSoap
   #
 
   def sendRequestXML(parameters)
+    verify_ticket(parameters.ticket)
     qbwc_session = QBWC::Session.new_or_unfinished
     next_request = qbwc_session.next
     QBWC::SendRequestXMLResponse.new( next_request ? wrap_in_version(next_request.request) : '') 
@@ -68,6 +78,7 @@ class QBWC::QBWebConnectorSvcSoap
   #   parameters      ReceiveResponseXMLResponse - {http://developer.intuit.com/}receiveResponseXMLResponse
   #
   def receiveResponseXML(response)
+    verify_ticket(response.ticket)
     qbwc_session = QBWC::Session.new_or_unfinished
     qbwc_session.response = response.response
     QBWC::ReceiveResponseXMLResponse.new(qbwc_session.progress)
@@ -116,10 +127,24 @@ class QBWC::QBWebConnectorSvcSoap
     if qbwc_session && qbwc_session.finished?
       qbwc_session.current_request.process_response unless qbwc_session.current_request.blank?
     end
+    if QBWC.ticket_destruction_proc
+      QBWC.ticket_destruction_proc.call(parameters.ticket)
+    end
     QBWC::CloseConnectionResponse.new('OK')
   end
 
-private
+  private
+
+  def verify_ticket(ticket)
+    if ['none', 'nvu'].include? ticket
+      raise Exception
+    end
+    if QBWC.request_verification_proc
+      QBWC.request_verification_proc.call(ticket)
+    else
+      Rails.logger.info 'No request verification proc'
+    end
+  end
 
   # wraps xml in version header
   def wrap_in_version(xml_rq)
