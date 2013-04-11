@@ -1,5 +1,7 @@
  
 class QBWC::QBWebConnectorSvcSoap
+  class NotAuthorized < Exception; end
+
   # SYNOPSIS
   #   serverVersion(parameters)
   #
@@ -137,10 +139,10 @@ class QBWC::QBWebConnectorSvcSoap
 
   def verify_ticket(ticket)
     if ['none', 'nvu'].include? ticket
-      raise Exception
+      raise NotAuthorized
     end
     if QBWC.request_verification_proc
-      QBWC.request_verification_proc.call(ticket)
+      raise NotAuthorized unless QBWC.request_verification_proc.call(ticket)
     else
       Rails.logger.info 'No request verification proc'
     end
