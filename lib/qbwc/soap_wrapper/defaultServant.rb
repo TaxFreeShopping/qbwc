@@ -97,6 +97,7 @@ class QBWC::QBWebConnectorSvcSoap
   #
   def connectionError(parameters)
     #p [parameters]
+    debugger
     raise NotImplementedError.new
   end
 
