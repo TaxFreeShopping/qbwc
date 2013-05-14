@@ -67,7 +67,7 @@ class QBWC::QBWebConnectorSvcSoap
     verify_ticket(parameters.ticket)
     qbwc_session = QBWC::Session.new_or_unfinished
     next_request = qbwc_session.next
-    QBWC::SendRequestXMLResponse.new( next_request ? wrap_in_version(next_request.request) : '') 
+    QBWC::SendRequestXMLResponse.new( next_request ?  next_request.request : '') 
   end
 
   # SYNOPSIS
