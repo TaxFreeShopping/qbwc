@@ -33,21 +33,14 @@ class QBWC::Session
   end
 
   def response=(qbxml_response)
-    begin
-      @current_request.response = QBWC.parser.from_qbxml(qbxml_response)
-      parse_response_header(@current_request.response)
+    @current_request.response = QBWC.parser.from_qbxml(qbxml_response)
+    parse_response_header(@current_request.response)
 
-      if QBWC.delayed_processing
-        @saved_requests << @current_request
-      else
-        @current_request.process_response
-      end
-    rescue => e
-      puts "An error occured in QBWC::Session: #{e}"
-      puts e
-      puts e.backtrace
+    if QBWC.delayed_processing
+      @saved_requests << @current_request
+    else
+      @current_request.process_response
     end
-
   end
 
   def process_saved_responses
