@@ -33,13 +33,19 @@ class QBWC::Session
   end
 
   def response=(qbxml_response)
-    @current_request.response = QBWC.parser.from_qbxml(qbxml_response)
-    parse_response_header(@current_request.response)
+    response = QBWC.parser.from_qbxml(qbxml_response)
+    key = nil
 
-    if QBWC.delayed_processing
-      @saved_requests << @current_request
-    else
-      @current_request.process_response
+    if response['qbxml']['qbxml_msgs_rs'].present?
+      keys = response['qbxml']['qbxml_msgs_rs'].keys
+      keys = keys - ['xml_attributes']
+      key = keys.first
+      key = key[0...-3] if key
+    end
+
+    if key
+      processor = QBWC.processors[key]
+      processor && processor.call(response)
     end
   end
 
