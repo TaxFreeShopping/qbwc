@@ -20,7 +20,6 @@ class QBWC::Session
 
   def reset
     @progress = QBWC.jobs.blank? ? 100 : 0
-    enabled_jobs.map { |j| j.reset }
     @requests = build_request_generator(enabled_jobs)
   end
 
@@ -32,25 +31,12 @@ class QBWC::Session
     @requests.alive? ? @requests.resume : nil
   end
 
-  def response=(qbxml_response)
-    response = QBWC.parser.from_qbxml(qbxml_response)
-    key = nil
-
-    if response['qbxml']['qbxml_msgs_rs'].present?
-      keys = response['qbxml']['qbxml_msgs_rs'].keys
-      keys = keys - ['xml_attributes']
-      key = keys.first
-      key = key[0...-3] if key
-    end
-
-    if key
-      processor = QBWC.processors[key]
-      processor && processor.call(response)
-    end
-  end
-
   def process_saved_responses
     @saved_requests.each { |r| r.process_response }
+  end
+
+  def end_session!
+    @progress = 100
   end
 
   private
@@ -61,22 +47,45 @@ class QBWC::Session
 
   def build_request_generator(jobs)
     Fiber.new do
-      jobs.each do |j|
-        @current_job = j
-        while (r = next_request)
-          @current_request = r
-          Fiber.yield r
-        end
+      @current_job = next_job(jobs)
+      while(@current_job)
+        @current_request = @current_job.try(:request)
+        Fiber.yield @current_request
+        @current_job = next_job(jobs)
       end
-
-      @current_request = nil
-      @progress = 100
       nil
     end
   end
 
-  def next_request
-    (@qbwc_iterating == true && @qbwc_iterator_queue.shift) || @current_job.try(:next)
+  def next_job(jobs)
+    job_names = jobs.map &:name
+    if current_job_name.empty?
+      set_current_job_name job_names.first
+      job_index = 0
+    else
+      job_index = job_names.find_index(current_job_name) + 1
+    end
+
+    up_next = jobs[job_index]
+    set_current_job_name(up_next.try :name)
+
+    up_next
+  end
+
+  def current_job_name
+    if QBWC.redis
+      QBWC.redis.get('quickbooks_current_job_name')
+    else
+      @current_job_name
+    end
+  end
+
+  def set_current_job_name(value)
+    if QBWC.redis
+      QBWC.redis.set('quickbooks_current_job_name', value)
+    else
+      @current_job_name = value
+    end
   end
 
   def parse_response_header(response)
@@ -102,6 +111,23 @@ class QBWC::Session
   end
 
   class << self
+    def handle_response(qbxml_response)
+      response = QBWC.parser.from_qbxml(qbxml_response)
+      key = nil
+
+      if response['qbxml']['qbxml_msgs_rs'].present?
+        keys = response['qbxml']['qbxml_msgs_rs'].keys
+        keys = keys - ['xml_attributes']
+        key = keys.first
+        key = key[0...-3] if key
+      end
+
+      if key
+        processor = QBWC.processors[key]
+        processor && processor.call(response)
+      end
+    end
+
     def new_or_unfinished
       (!@@session || @@session.finished?) ? new : @@session
     end

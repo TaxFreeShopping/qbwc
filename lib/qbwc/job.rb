@@ -6,8 +6,6 @@ class QBWC::Job
     @name = name
     @enabled = true
     @requests = block
-
-    reset
   end
 
   def set_response_proc(&block) 
@@ -36,22 +34,7 @@ class QBWC::Job
     @enabled
   end
 
-  def next
-    @request_gen.alive? ? @request_gen.resume : nil
+  def request
+    QBWC::Request.new(@requests.call, @response_proc )
   end
-
-  def reset
-    @request_gen = new_request_generator
-  end
-
-  private
-
-  def new_request_generator
-    Fiber.new { request_queue.each { |r| Fiber.yield r }; nil }
-  end
-
-  def request_queue
-    QBWC::Request.from_array(@requests.call, @response_proc )
-  end
-
 end

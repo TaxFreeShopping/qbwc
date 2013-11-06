@@ -81,9 +81,8 @@ class QBWC::QBWebConnectorSvcSoap
   #
   def receiveResponseXML(response)
     verify_ticket(response.ticket)
-    qbwc_session = QBWC::Session.new_or_unfinished
-    qbwc_session.response = response.response
-    QBWC::ReceiveResponseXMLResponse.new(qbwc_session.progress)
+    QBWC::Session.handle_response(response.response)
+    QBWC::ReceiveResponseXMLResponse.new(0)
   end
 
   # SYNOPSIS
@@ -126,9 +125,7 @@ class QBWC::QBWebConnectorSvcSoap
   def closeConnection(parameters)
     #p [parameters]
     qbwc_session = QBWC::Session.session
-    if qbwc_session && qbwc_session.finished?
-      qbwc_session.current_request.process_response unless qbwc_session.current_request.blank?
-    end
+    qbwc_session.end_session!
     if QBWC.ticket_destruction_proc
       QBWC.ticket_destruction_proc.call(parameters.ticket)
     end

@@ -8,6 +8,9 @@ module QBWC
   mattr_accessor :authentication_proc
   @@authentication_proc = nil
 
+  mattr_accessor :redis
+  @@redis = nil
+
   mattr_accessor :request_verification_proc
   @@request_verification_proc = nil
 
