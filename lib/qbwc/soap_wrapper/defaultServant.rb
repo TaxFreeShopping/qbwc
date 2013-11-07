@@ -125,7 +125,7 @@ class QBWC::QBWebConnectorSvcSoap
   def closeConnection(parameters)
     #p [parameters]
     qbwc_session = QBWC::Session.session
-    qbwc_session.end_session!
+    qbwc_session.try :end_session!
     if QBWC.ticket_destruction_proc
       QBWC.ticket_destruction_proc.call(parameters.ticket)
     end
