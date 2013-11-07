@@ -59,7 +59,7 @@ class QBWC::Session
 
   def next_job(jobs)
     job_names = jobs.map &:name
-    if current_job_name.empty?
+    if current_job_name.blank?
       set_current_job_name job_names.first
       job_index = 0
     else
