@@ -124,8 +124,9 @@ class QBWC::QBWebConnectorSvcSoap
   #
   def closeConnection(parameters)
     #p [parameters]
-    qbwc_session = QBWC::Session.session
-    qbwc_session.try :end_session!
+    if QBWC.redis
+      QBWC.redis.set('quickbooks_current_job_name', '')
+    end
     if QBWC.ticket_destruction_proc
       QBWC.ticket_destruction_proc.call(parameters.ticket)
     end
