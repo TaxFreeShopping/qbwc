@@ -82,9 +82,9 @@ class QBWC::Session
 
   def set_current_job_name(value)
     if QBWC.redis
-      puts "FINISHED: #{current_job}"
+      puts "FINISHED: #{current_job_name}"
       QBWC.redis.set('quickbooks_current_job_name', value)
-      puts "STARTED: #{current_job}"
+      puts "STARTED: #{current_job_name}"
     else
       @current_job_name = value
     end
