@@ -40,7 +40,6 @@ class QBWC::QBWebConnectorSvcSoap
   #   parameters      AuthenticateResponse - {http://developer.intuit.com/}authenticateResponse
   #
   def authenticate(parameters)
-    #p parameters                               
     if QBWC.authentication_proc
       ticket = QBWC.authentication_proc.call(parameters.strUserName, parameters.strPassword)
     else

@@ -28,7 +28,7 @@ class QBWC::Session
   end
 
   def next
-    @requests.alive? ? @requests.resume : nil
+    next_job(enabled_jobs).try(:request)
   end
 
   def process_saved_responses
@@ -43,18 +43,6 @@ class QBWC::Session
 
   def enabled_jobs
     QBWC.jobs.values.select { |j| j.enabled? }
-  end
-
-  def build_request_generator(jobs)
-    Fiber.new do
-      @current_job = next_job(jobs)
-      while(@current_job)
-        @current_request = @current_job.try(:request)
-        Fiber.yield @current_request
-        @current_job = next_job(jobs)
-      end
-      nil
-    end
   end
 
   def next_job(jobs)
@@ -81,13 +69,13 @@ class QBWC::Session
   end
 
   def set_current_job_name(value)
+    puts "FINISHED: #{current_job_name}"
     if QBWC.redis
-      puts "FINISHED: #{current_job_name}"
       QBWC.redis.set('quickbooks_current_job_name', value)
-      puts "STARTED: #{current_job_name}"
     else
       @current_job_name = value
     end
+    puts "STARTED: #{current_job_name}"
   end
 
   def parse_response_header(response)
