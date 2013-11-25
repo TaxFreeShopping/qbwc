@@ -20,7 +20,6 @@ class QBWC::Session
 
   def reset
     @progress = QBWC.jobs.blank? ? 100 : 0
-    @requests = build_request_generator(enabled_jobs)
   end
 
   def finished?
